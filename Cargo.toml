@@ -4,8 +4,46 @@ version = "0.1.0"
 authors = ["ThePerkinrex <theperkinrex@gmail.com>"]
 edition = "2018"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+autoloop = ["libpulse-binding", "ctrlc"]
+default = ["mp3", "flac", "vorbis", "wav", "opus"]
+flac = ["claxon"]
+mp3 = ["minimp3", "mp3-duration"]
+opus = ["audiopus", "ogg", "ogg_metadata"]
+vorbis = ["lewton", "ogg_metadata"]
+wav = ["hound"]
+xm = ["libxm-soundboard"]
+
 
 [dependencies]
 iced = "0.1.1"
-cpal = "0.12.0"
+ron = "0.6.0"
+serde = "1.0.114"
+miniaudio = "0.9.0"
+anyhow = "1.0.31"
+log = "0.4.11"
+#mowl = "2.1.0"
+fern = "0.6.0"
+recolored = "1.9.3"
+crossbeam-channel = "0.4.3"
+parking_lot = "0.11.0"
+strum = "0.18.0"
+strum_macros = "0.18.0"
+directories = "3.0.1"
+reqwest = { version = "0.10", features = ["blocking"] }
+zip-extract = "0.1.0"
+
+# AUTOLOOP
+ctrlc = {version = "3.1.5", features = ["termination"], optional = true}
+libpulse-binding = {version = "2.16", features = ["pa_latest_common"], optional = true}
+
+# AUDIO DECODING
+audiopus = {version = "0.2", optional = true}
+claxon = {version = "0.4", optional = true}
+hound = {version = "3", optional = true}
+lewton = {version = "0.10", optional = true}
+libxm-soundboard = {version = "0.0.1", optional = true}
+minimp3 = {version = "0.3", optional = true}
+mp3-duration = {version = "0.1.10", optional = true}
+ogg = {version = "0.7", optional = true}
+ogg_metadata = {version = "0.4", optional = true}
