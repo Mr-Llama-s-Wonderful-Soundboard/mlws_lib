@@ -262,7 +262,6 @@ impl<'a> Application for App {
                         column.push(row)
                     },
                 );
-
                 c.push(
                     Button::new(&mut self.settings_button, Text::new("⚙"))
                         .on_press(Message::SettingsPressed),
