@@ -1,28 +1,124 @@
 use anyhow::{anyhow, Result};
 use libpulse_binding as pulse;
-use log::{error, info, trace, warn};
+use log::{debug, warn, info, trace};
 use pulse::context::State;
+
+type ListResult<T> = pulse::callbacks::ListResult<T>;
+
+pub struct Module {
+    id: u32,
+}
+
+impl Module {
+    pub fn load(module_name: &str, args: &str) -> Result<Self> {
+        info!("Loading module {} {})", module_name, args);
+        let id = load_module(module_name, args)?;
+        info!("Loaded module #{} ({} {})", id, module_name, args);
+        Ok(Self { id })
+    }
+
+    pub fn unload(&self) -> Result<()> {
+        info!("Unloading module {}", self.id);
+        unload_module(self.id)
+    }
+}
+
+// impl Drop for Module {
+//     fn drop(&mut self) {
+//         self.unload().expect("Error unloading module")
+//     }
+// }
 
 pub fn load_module(module_name: &str, args: &str) -> Result<u32> {
     let (mut mainloop, pulse_context) = connect_pulse()?;
 
-    let (sender, receiver): (
+    mainloop.lock();
+
+    let mut introspector = pulse_context.introspect();
+    let (check_sender, check_receiver): (
+        crossbeam_channel::Sender<ListResult<(bool, u32)>>,
+        crossbeam_channel::Receiver<ListResult<(bool, u32)>>,
+    ) = crossbeam_channel::unbounded();
+    let name_clone = String::from(module_name);
+    let args_clone = String::from(args);
+    let check_module_callback = move |module_info: pulse::callbacks::ListResult<
+        &pulse::context::introspect::ModuleInfo,
+    >| {
+        //debug!("Gotten list result");
+        let r = match module_info {
+            ListResult::Error => ListResult::Error,
+            ListResult::End => ListResult::Error,
+            ListResult::Item(i) => {
+                debug!(
+                    "{}: {} {}",
+                    i.index,
+                    i.name.clone().unwrap_or("<UNNAMED>".into()),
+                    i.argument.clone().unwrap_or("<NO ARGS>".into())
+                );
+                pulse::callbacks::ListResult::Item((
+                    i.name
+                        .clone()
+                        .and_then(|name| Some(name == name_clone))
+                        .unwrap_or_default()
+                        && i.argument
+                            .clone()
+                            .and_then(|a| Some(a == args_clone))
+                            .unwrap_or_default(),
+                    i.index,
+                ))
+            }
+        };
+        check_sender.send(r).expect("send channel error");
+    };
+    introspector.get_module_info_list(check_module_callback);
+    mainloop.unlock();
+    let mut present = None;
+    loop {
+        debug!("Recieving data");
+        match check_receiver.recv() {
+            Err(e) => {
+                return Err(anyhow!(
+                    "Failed to recv from pulse list modules callback {}",
+                    e
+                ))
+            }
+            Ok(ListResult::Error) => {
+                warn!("{}", anyhow!("Failed to read module list"));
+                break;
+            }
+            Ok(ListResult::End) => {
+                debug!("BREAKING");
+                break;
+            }
+            Ok(ListResult::Item((b, i))) => {
+                if b {
+                    present = Some(i);
+                    break;
+                }
+            }
+        }
+    }
+
+    if let Some(r) = present {
+        info!("Module #{} ({} {}) already loaded", r, module_name, args);
+        return Ok(r);
+    }
+    mainloop.lock();
+    let (load_sender, load_receiver): (
         crossbeam_channel::Sender<Result<u32>>,
         crossbeam_channel::Receiver<Result<u32>>,
     ) = crossbeam_channel::unbounded();
 
-    let callback = move |module_index: u32| {
-        sender.send(Ok(module_index)).expect("send channel error");
+    let load_module_callback = move |module_index: u32| {
+        load_sender
+            .send(Ok(module_index))
+            .expect("send channel error");
     };
-
-    mainloop.lock();
-
-    let mut introspector = pulse_context.introspect();
-    introspector.load_module(module_name, args, callback);
+    introspector.load_module(module_name, args, load_module_callback);
 
     mainloop.unlock();
 
-    let result = match receiver.recv() {
+    let result = match load_receiver.recv() {
         Err(err) => Err(anyhow!("Failed to recv from pulse module callback {}", err)),
         Ok(Err(err)) => Err(anyhow!("Failed to load pulse module {}", err)),
         Ok(Ok(module_index)) => Ok(module_index),

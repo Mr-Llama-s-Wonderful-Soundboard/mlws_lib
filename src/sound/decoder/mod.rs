@@ -6,6 +6,8 @@ use std::fmt;
 use std::io::{Read, Seek};
 use std::time::Duration;
 
+use log::info;
+
 use super::source::Source;
 
 #[cfg(feature = "flac")]
@@ -71,19 +73,19 @@ where
     /// Attempts to automatically detect the format of the source of data.
     #[allow(unused_variables)]
     pub fn new(data: R) -> Result<Decoder<R>, DecoderError> {
-        #[cfg(feature = "mp3")]
-        let data = match mp3::Mp3Decoder::new(data) {
-            Err(data) => data,
-            Ok(decoder) => {
-                return Ok(Decoder(DecoderImpl::Mp3(decoder)));
-            }
-        };
-
         #[cfg(feature = "wav")]
         let data = match wav::WavDecoder::new(data) {
             Err(data) => data,
             Ok(decoder) => {
                 return Ok(Decoder(DecoderImpl::Wav(decoder)));
+            }
+        };
+
+        #[cfg(feature = "mp3")]
+        let data = match mp3::Mp3Decoder::new(data) {
+            Err(data) => data,
+            Ok(decoder) => {
+                return Ok(Decoder(DecoderImpl::Mp3(decoder)));
             }
         };
 

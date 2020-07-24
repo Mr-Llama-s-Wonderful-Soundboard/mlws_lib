@@ -6,7 +6,7 @@ edition = "2018"
 
 [features]
 autoloop = ["libpulse-binding", "ctrlc"]
-default = ["mp3", "flac", "vorbis", "wav", "opus"]
+default = ["wav", "mp3", "autoloop"]
 flac = ["claxon"]
 mp3 = ["minimp3", "mp3-duration"]
 opus = ["audiopus", "ogg", "ogg_metadata"]
@@ -16,7 +16,8 @@ xm = ["libxm-soundboard"]
 
 
 [dependencies]
-iced = "0.1.1"
+iced = {version = "0.1.1", features=["image"]}
+iced_native = "0.2.2"
 ron = "0.6.0"
 serde = "1.0.114"
 miniaudio = "0.9.0"

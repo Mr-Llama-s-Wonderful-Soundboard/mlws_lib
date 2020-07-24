@@ -62,7 +62,13 @@ pub struct Sound {
     pub img: Option<PathBuf>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Deserialize, Serialize, Default, PartialEq, Eq, Hash, Clone)]
+pub struct SoundRON {
+    pub default_img: PathBuf,
+    pub sounds: Vec<Sound>,
+}
+
+#[derive(Debug, Default, Clone)]
 pub struct SoundConfig {
     pub sounds: HashMap<String, Sound>,
 }
@@ -89,15 +95,15 @@ impl SoundConfig {
         let mut file = File::open(sounds_config_path).unwrap();
         let mut buf = String::new();
         file.read_to_string(&mut buf).expect("Error reading config");
-        let sounds_config: Vec<Sound> = ron::from_str(&buf).expect("Error parsing sounds config");
+        let sounds_config: SoundRON = ron::from_str(&buf).expect("Error parsing sounds config");
         let mut sounds = HashMap::new();
-        sounds_config.iter().for_each(|x| {
+        sounds_config.sounds.iter().for_each(|x| {
             sounds.insert(
                 x.name.clone(),
                 Sound {
                     name: x.name.clone(),
                     wav: sounds_dir.join(x.wav.clone()),
-                    img: x.img.clone().and_then(|p| Some(sounds_dir.join(p))),
+                    img: Some(sounds_dir.join(x.img.clone().unwrap_or(sounds_config.default_img.clone()))),
                 },
             );
         });
@@ -123,19 +129,23 @@ impl SoundConfig {
         let mut file = File::open(sounds_config_path).unwrap();
         let mut buf = String::new();
         file.read_to_string(&mut buf).expect("Error reading config");
-        let sounds_config: Vec<Sound> = ron::from_str(&buf).expect("Error parsing sounds config");
+        let sounds_config: SoundRON = ron::from_str(&buf).expect("Error parsing sounds config");
         let mut sounds = HashMap::new();
-        sounds_config.iter().for_each(|x| {
+        sounds_config.sounds.iter().for_each(|x| {
             sounds.insert(
                 x.name.clone(),
                 Sound {
                     name: x.name.clone(),
                     wav: sounds_dir.join(x.wav.clone()),
-                    img: x.img.clone().and_then(|p| Some(sounds_dir.join(p))),
+                    img: Some(sounds_dir.join(x.img.clone().unwrap_or(sounds_config.default_img.clone()))),
                 },
             );
-		});
+        });
 		info!("Done!");
         Self { sounds }
+    }
+
+    pub fn get(&self, name: &String) -> Option<&Sound> {
+        self.sounds.get(name)
     }
 }
