@@ -1,12 +1,12 @@
 use anyhow::{anyhow, Result};
-use log::{error, info, trace, warn};
+use log::{error, info, warn};
 use std::collections::HashMap;
-use std::io::BufReader;
-use std::path::PathBuf;
-use std::str::FromStr;
-use std::sync::Arc;
-use std::thread::JoinHandle;
-use std::time::Duration;
+// use std::io::BufReader;
+// use std::path::PathBuf;
+// use std::str::FromStr;
+// use std::sync::Arc;
+// use std::thread::JoinHandle;
+// use std::time::Duration;
 
 use super::config;
 //use super::download;
@@ -20,7 +20,7 @@ mod source;
 use decoder::Decoder;
 use miniaudio::{Context, DeviceId, DeviceType, ShareMode};
 use sink::Sink;
-use source::Source;
+// use source::Source;
 
 static DEFAULT_BACKENDS: [miniaudio::Backend; 5] = [
     miniaudio::Backend::Wasapi,
@@ -55,6 +55,7 @@ fn print_device_info(context: &Context, device_type: DeviceType, device_id: &Dev
     info!("\t\t\tFormats: {:?}", info.formats());
 }
 
+#[allow(dead_code)]
 pub fn print_possible_devices_and_exit() {
     let context = Context::new(&DEFAULT_BACKENDS, None).expect("could not create audio context");
     print_possible_devices(&context, true);

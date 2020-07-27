@@ -6,7 +6,7 @@ edition = "2018"
 
 [features]
 autoloop = ["libpulse-binding", "ctrlc"]
-default = ["wav", "mp3", "autoloop"]
+default = ["wav", "mp3"]
 flac = ["claxon"]
 mp3 = ["minimp3", "mp3-duration"]
 opus = ["audiopus", "ogg", "ogg_metadata"]

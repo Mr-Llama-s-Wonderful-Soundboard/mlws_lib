@@ -5,6 +5,7 @@ use pulse::context::State;
 
 type ListResult<T> = pulse::callbacks::ListResult<T>;
 
+#[allow(dead_code)]
 pub struct Module {
     id: u32,
 }
@@ -17,6 +18,7 @@ impl Module {
         Ok(Self { id })
     }
 
+    #[allow(dead_code)]
     pub fn unload(&self) -> Result<()> {
         info!("Unloading module {}", self.id);
         unload_module(self.id)

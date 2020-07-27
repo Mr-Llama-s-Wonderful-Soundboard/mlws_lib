@@ -4,12 +4,12 @@ use ron;
 use serde::*;
 use std::collections::HashMap;
 use std::fs::{create_dir_all, File};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
 use zip_extract as zip;
 
-use log::{error, info, warn};
+use log::info;
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Config {
@@ -121,6 +121,7 @@ impl SoundConfig {
         Self { sounds }
     }
 
+    #[allow(dead_code)]
     pub fn update() -> Self {
         info!("Updating sounds");
         let basedirs = BaseDirs::new().expect("Error getting base dirs");

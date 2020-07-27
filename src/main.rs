@@ -1,17 +1,13 @@
-use iced::{
-    button, executor, Align, Application, Button, Column, Command, Element, Image, Length, Row,
-    Settings, Subscription, Text,
-};
-use iced_native::Event;
+use iced::{Application, Settings};
 
 use fern;
-use log::{error, info, warn};
+use log::info;
 use recolored::Colorize;
 
-#[cfg(feature = "autoloop")]
-use ctrlc;
+// #[cfg(feature = "autoloop")]
+// use ctrlc;
 
-use std::{fs, io};
+use std::io;
 
 mod config;
 #[cfg(feature = "autoloop")]
@@ -68,7 +64,7 @@ fn main() {
     #[cfg(feature = "autoloop")]
     if conf.autoloop {
         info!("Loading modules");
-        let null_sink = match PaModule::load(
+        let _null_sink = match PaModule::load(
             "module-null-sink",
             "sink_name=SoundboardNullSink sink_properties=device.description=SoundboardNullSink",
         ) {
@@ -82,7 +78,7 @@ fn main() {
 
         //_maybe_null_sink = Some(null_sink);
 
-        let loopback = match PaModule::load(
+        let _loopback = match PaModule::load(
             "module-loopback",
             "source=@DEFAULT_SOURCE@ sink=SoundboardNullSink latency_msec=5",
         ) {
