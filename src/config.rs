@@ -9,13 +9,15 @@ use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
 use zip_extract as zip;
 
-use log::{info, warn, error};
+use log::{error, info, warn};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Default)]
 pub struct Config {
     pub input_device: Option<String>,
     pub output_device: Option<String>,
     pub loopback_device: Option<String>,
+    #[cfg(feature = "autoloop")]
+    pub autoloop: bool,
     pub hotkeys: HashMap<String, String>,
 }
 
@@ -33,7 +35,12 @@ impl Config {
             file.read_to_string(&mut buf).expect("Error reading config");
             ron::from_str(&buf).expect("Error parsing config")
         } else {
-            let s = Self::default();
+            #[allow(unused_mut)]
+            let mut s = Self::default();
+            #[cfg(feature = "autoloop")]
+            {
+                s.autoloop = true;
+            }
             s.save();
             s
         }
@@ -78,7 +85,7 @@ const SOUNDS_URL: &str =
 
 impl SoundConfig {
     pub fn load() -> Self {
-		info!("Loading sounds");
+        info!("Loading sounds");
         let basedirs = BaseDirs::new().expect("Error getting base dirs");
         let sounds_dir = basedirs.home_dir().join(".mlws");
         let sounds_config_path = sounds_dir.join("sounds.ron");
@@ -103,17 +110,19 @@ impl SoundConfig {
                 Sound {
                     name: x.name.clone(),
                     wav: sounds_dir.join(x.wav.clone()),
-                    img: Some(sounds_dir.join(x.img.clone().unwrap_or(sounds_config.default_img.clone()))),
+                    img: Some(
+                        sounds_dir.join(x.img.clone().unwrap_or(sounds_config.default_img.clone())),
+                    ),
                 },
             );
         });
 
-		info!("Done!");
+        info!("Done!");
         Self { sounds }
     }
 
     pub fn update() -> Self {
-		info!("Updating sounds");
+        info!("Updating sounds");
         let basedirs = BaseDirs::new().expect("Error getting base dirs");
         let sounds_dir = basedirs.home_dir().join(".mlws");
         let sounds_config_path = sounds_dir.join("sounds.ron");
@@ -123,9 +132,9 @@ impl SoundConfig {
             .expect("Error getting sounds files")
             .read_to_end(&mut archive)
             .expect("Error reading archive");
-		info!("Extracting sounds");
-		zip::extract(Cursor::new(archive), &sounds_dir, true).expect("Error extracting archive");
-		
+        info!("Extracting sounds");
+        zip::extract(Cursor::new(archive), &sounds_dir, true).expect("Error extracting archive");
+
         let mut file = File::open(sounds_config_path).unwrap();
         let mut buf = String::new();
         file.read_to_string(&mut buf).expect("Error reading config");
@@ -137,11 +146,13 @@ impl SoundConfig {
                 Sound {
                     name: x.name.clone(),
                     wav: sounds_dir.join(x.wav.clone()),
-                    img: Some(sounds_dir.join(x.img.clone().unwrap_or(sounds_config.default_img.clone()))),
+                    img: Some(
+                        sounds_dir.join(x.img.clone().unwrap_or(sounds_config.default_img.clone())),
+                    ),
                 },
             );
         });
-		info!("Done!");
+        info!("Done!");
         Self { sounds }
     }
 

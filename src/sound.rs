@@ -91,7 +91,7 @@ pub fn run_sound_loop(
     input_device_identifier: Option<String>,
     output_device_identifier: Option<String>,
     loop_device_identifier: String,
-) -> ! {
+) -> () {
     let mut context_config = miniaudio::ContextConfig::default();
     context_config
         .pulse_mut()
@@ -263,6 +263,7 @@ pub enum Message {
     SetVolume(f32),
     PlayStatus(PlayStatusVecType, f32),
     _PlaySoundDownloaded(config::Sound, SoundDevices, std::path::PathBuf),
+    Kill,
 }
 
 fn insert_sink_with_config(
@@ -319,7 +320,7 @@ fn run_sound_message_loop(
     loop_device: miniaudio::DeviceIdAndName,
     output_device: Option<miniaudio::DeviceIdAndName>,
     loopback_device: Option<miniaudio::Device>,
-) -> ! {
+) -> () {
     let mut volume: f32 = 1.0;
     let mut sinks: SoundMap = HashMap::new();
 
@@ -341,7 +342,7 @@ fn run_sound_message_loop(
         .start()
         .expect("failed to start loopback_sink");
 
-    loop {
+    'mainloop: loop {
         match sound_receiver.recv() {
             Ok(message) => match message {
                 Message::PlaySound(sound_config, sound_devices) => {
@@ -443,6 +444,10 @@ fn run_sound_message_loop(
                         .send(Message::PlayStatus(sounds, volume))
                         .expect("sound channel error");
                 }
+                Message::Kill => {
+                    warn!("Stopping sound loop");
+                    break 'mainloop;
+                }
             },
             Err(err) => {
                 error!("message receive error {}", err);
@@ -525,7 +530,7 @@ fn create_duplex_device(
     });
 
     device_config.set_stop_callback(|_device| {
-        error!("Loopback device stopped!!!");
+        warn!("Loopback device stopped!!!");
     });
 
     let device = miniaudio::Device::new(Some(context.clone()), &device_config)
