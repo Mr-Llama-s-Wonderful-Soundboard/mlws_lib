@@ -139,6 +139,19 @@ impl SettingsUI {
                 )
                 .padding(10),
             ));
+        #[cfg(not(feature = "autoloop"))]
+        {
+            devices = devices.push(new_device_setting(
+                "Loopback device (Required)",
+                TextInput::new(
+                    &mut self.loopback_field.state,
+                    "field required",
+                    self.loopback_field.value.as_str(),
+                    |x| super::Message::Settings(SettingsMessage::LoopbackFieldChange(x)),
+                )
+                .padding(10),
+            ));
+        }
         #[cfg(feature = "autoloop")]
         {
             if !self.config.autoloop {
