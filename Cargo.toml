@@ -4,6 +4,10 @@ version = "0.1.0"
 authors = ["ThePerkinrex <theperkinrex@gmail.com>"]
 edition = "2018"
 
+[target.x86_64-pc-windows-gnu]
+linker = "x86_64-w64-mingw32-gcc"
+ar = "x86_64-w64-mingw32-gcc-ar"
+
 [features]
 autoloop = ["libpulse-binding", "ctrlc"]
 default = ["wav", "mp3"]
