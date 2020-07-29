@@ -1,0 +1,60 @@
+[package]
+name = "rdev"
+version = "0.4.0"
+authors = ["Nicolas Patry <patry.nicolas@protonmail.com>"]
+edition = "2018"
+
+description = "Listen and send keyboard and mouse events on Windows, Linux and MacOS."
+documentation = "https://docs.rs/rdev/"
+homepage = "https://github.com/Narsil/rdev"
+repository = "https://github.com/Narsil/rdev"
+readme = "README.md"
+keywords = ["input", "mouse", "testing", "keyboard", "automation"]
+categories = ["development-tools::testing", "api-bindings", "hardware-support"]
+license = "MIT"
+
+[dependencies]
+serde = {version = "1.0", features = ["derive"], optional=true}
+
+[features]
+serialize = ["serde"]
+unstable_grab = []
+
+[target.'cfg(target_os = "macos")'.dependencies]
+lazy_static = "1.4.0"
+cocoa = "0.20"
+core-graphics = {version = "0.19.0", features = ["highsierra"]}
+core-foundation = {version = "0.7"}
+core-foundation-sys = {version = "0.7"}
+
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+x11 = {version = "2.18", features = ["xlib", "xrecord", "xinput"]}
+xproto = "1.1"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+lazy_static = "1.4.0"
+winapi = { version = "0.3", features = ["winuser", "errhandlingapi", "processthreadsapi"] }
+
+[dev-dependencies]
+lazy_static = "1.4.0"
+serde_json = "1.0"
+# Some tests interact with the real OS. We can't hit the OS in parallel
+# because that leads to unexpected behavior and flaky tests, so we need
+# to run thoses tests in sequence instead.
+serial_test = "0.4"
+
+
+[[example]]
+name = "serialize"
+required-features = ["serialize"]
+
+[[example]]
+name = "grab"
+required-features = ["unstable_grab"]
+
+[[test]]
+name = "grab"
+path = "tests/grab.rs"
+required-features = ["unstable_grab"]

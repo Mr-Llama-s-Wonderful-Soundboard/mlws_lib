@@ -1,9 +1,9 @@
 use iced::{Application, Settings};
 
 use fern;
-use log::info;
+use log::{info, warn};
 use recolored::Colorize;
-
+use rdev::Key;
 // #[cfg(feature = "autoloop")]
 // use ctrlc;
 
@@ -19,6 +19,8 @@ struct PaModule; // So that optionals for dropping work
 mod sound;
 
 mod ui;
+mod hotkey;
+mod utils;
 
 fn setup_logger() -> Result<(), log::SetLoggerError> {
     fern::Dispatch::new()
@@ -58,7 +60,13 @@ fn main() {
     //config::SoundsConfig::load();
     setup_logger().unwrap();
     info!("loaded logger");
+    let h = hotkey::HotkeyManager::new();
 
+    
+    //h.register(vec![Key::KeyA], ||{warn!("HOTKEY A")});
+    
+
+    #[allow(unused)]
     let mut conf = config::Config::load();
 
     #[cfg(feature = "autoloop")]
@@ -116,9 +124,10 @@ fn main() {
         state = ui::AppState::Soundboard;
     }
 
-    let mut settings = Settings::with_flags((gui_sender, gui_receiver, state, soundloop));
+    let mut settings = Settings::with_flags((gui_sender, gui_receiver, state, soundloop, h));
     settings.window.decorations = true;
     ui::App::run(settings);
+    //loop {}
 }
 
 pub struct SoundLoop {

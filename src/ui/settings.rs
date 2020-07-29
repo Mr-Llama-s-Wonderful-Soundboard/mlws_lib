@@ -1,16 +1,22 @@
+#[allow(unused)]
 use iced::{
-    button, executor, text_input, Align, Application, Button, Checkbox, Column, Command, Container,
-    Element, Image, Length, Row, Settings, Subscription, Text, TextInput,
+    button, text_input, Align, Button, Checkbox, Column, Command, Container,
+    Element, Row, Text, TextInput, ProgressBar
 };
 
 use log::{error, info};
+use directories::BaseDirs;
 
-use crate::config::Config;
+use crate::config::{Config, SoundConfig};
+use super::downloader;
+
+use crate::utils::bytes_as_str;
 
 #[derive(Debug, Clone)]
 pub enum SettingsMessage {
     Save,
     Cancel,
+    Update,
     InputFieldChange(String),
     OutputFieldChange(String),
     LoopbackFieldChange(String),
@@ -23,6 +29,7 @@ pub struct SettingsUI {
     config: Config,
     save_state: button::State,
     cancel_state: button::State,
+    update_state: button::State,
     input_field: TextField,
     output_field: TextField,
     loopback_field: TextField,
@@ -37,6 +44,7 @@ impl SettingsUI {
             config: cfg.clone(),
             save_state: Default::default(),
             cancel_state: Default::default(),
+            update_state: Default::default(),
             input_field: TextField::new(cfg.input_device.unwrap_or("".into())),
             output_field: TextField::new(cfg.output_device.unwrap_or("".into())),
             loopback_field: TextField::new(cfg.loopback_device.unwrap_or("".into())),
@@ -48,6 +56,24 @@ impl SettingsUI {
         message: SettingsMessage,
     ) -> (Command<super::Message>, Option<super::AppState>) {
         match message {
+            SettingsMessage::Update => {
+                let basedirs = BaseDirs::new().expect("Error getting base dirs");
+                let sounds_dir = basedirs.home_dir().join(".mlws");
+
+                let (s, r) = crossbeam_channel::unbounded();
+                
+                
+                downloader::download_extract(s, "https://github.com/Mr-Llama-s-Wonderful-Soundboard/sounds/archive/master.zip", sounds_dir);
+                (Command::perform(empty(), move |_|{
+                    loop {
+                        if let Ok(downloader::Message::End) = r.recv() {
+                            println!("Download done, reloading sounds");
+                            break;
+                        }
+                    }
+                    super::Message::Soundboard(super::soundboard::SoundboardMessage::ReloadSounds)
+                }), None)
+            }
             SettingsMessage::Save => {
                 info!("SAVING");
                 let input = if self.input_field.value == "" {
@@ -107,6 +133,10 @@ impl SettingsUI {
     pub fn view(&mut self, cancellable: bool) -> Element<super::Message> {
         self.cancellable = cancellable;
         let mut bottom = Row::new().align_items(Align::End).push(
+            Button::new(&mut self.update_state, Text::new("UPDATE"))
+                // .on_press(super::Message::Settings(SettingsMessage::Save))
+                .on_press(super::Message::Settings(SettingsMessage::Update)),
+        ).push(
             Button::new(&mut self.save_state, Text::new("Save"))
                 // .on_press(super::Message::Settings(SettingsMessage::Save))
                 .on_press(super::Message::Settings(SettingsMessage::Save)),

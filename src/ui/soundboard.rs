@@ -3,6 +3,8 @@ use iced::{
     Settings, Subscription, Text,
 };
 
+use log::info;
+
 use crate::config;
 use crate::sound;
 
@@ -100,7 +102,9 @@ impl Soundboard {
     }
 
     pub fn load_sounds(&mut self) {
+        info!("LOADING SOUNDS");
         self.sounds = config::SoundConfig::load();
+        info!("{:?}", self.sounds);
         self.update_sounds();
     }
 
