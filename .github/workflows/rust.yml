@@ -15,8 +15,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Clone repo
+      uses: actions/checkout@v2
     - name: Install x11
-      run: sudo apt-get install xorg openbox libxi6
+      run: sudo apt-get install pkg-config xorg libxi-dev
     - name: Build
       run: cargo build
