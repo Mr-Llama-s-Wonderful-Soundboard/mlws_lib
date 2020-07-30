@@ -42,7 +42,6 @@ pub struct App {
     soundboard: soundboard::Soundboard,
     settings: settings::SettingsUI,
     state: AppState,
-    hotkeys: crate::hotkey::HotkeyManager,
     message_receiver: crossbeam_channel::Receiver<soundboard::SoundboardMessage>,
 }
 
@@ -54,26 +53,20 @@ impl Application for App {
         crossbeam_channel::Receiver<sound::Message>,
         AppState,
         crate::SoundLoop,
-        crate::hotkey::HotkeyManager,
     );
 
     fn new(
-        (sound_sender, sound_reciever, state, soundloop, hotkeys): Self::Flags,
+        (sound_sender, sound_reciever, state, soundloop): Self::Flags,
     ) -> (Self, Command<Message>) {
         let (m_sender, m_receiver) = crossbeam_channel::unbounded();
         let mut r = Self {
             soundboard: soundboard::Soundboard::new(sound_sender, sound_reciever),
-            settings: settings::SettingsUI::new(soundloop),
+            settings: settings::SettingsUI::new(soundloop, m_sender),
             state,
-            hotkeys,
             message_receiver: m_receiver,
         };
         r.soundboard.load_sounds();
-        r.hotkeys.register(vec![rdev::Key::KeyR], Box::new(move || {
-            m_sender.send(
-                soundboard::SoundboardMessage::SoundPressed("Our anthem".into()),
-            ).expect("Error sending sound request");
-        }));
+        
         (r, Command::none())
     }
 
@@ -89,8 +82,8 @@ impl Application for App {
             Message::Soundboard(m) => {
                 let (cmd, change_state) = self.soundboard.update(m);
                 if let Some(state) = change_state {
-                    info!("Started detecting");
-                    self.hotkeys.start_detecting();
+                    //info!("Started detecting");
+                    //self.hotkeys.start_detecting();
                     self.state = state;
                 }
                 cmd
@@ -99,12 +92,15 @@ impl Application for App {
             Message::Settings(m) => {
                 let (cmd, change_state) = self.settings.update(m);
                 if let Some(state) = change_state {
-                    info!("RESULT KEYS: {:?}", self.hotkeys.stop_detecting());
+                    //info!("RESULT KEYS: {:?}", self.hotkeys.stop_detecting());
                     self.state = state;
                 }
                 cmd
             }
-            Message::Tick => {Command::none()} //Message::Event(_) => {Command::none()}
+            Message::Tick => {
+                self.settings.tick();
+                Command::none()
+            } //Message::Event(_) => {Command::none()}
         }
     }
 
@@ -115,7 +111,7 @@ impl Application for App {
     fn view(&mut self) -> Element<Message> {
         match self.state {
             AppState::Soundboard => self.soundboard.view(),
-            AppState::Settings(cancellable) => self.settings.view(cancellable),
+            AppState::Settings(cancellable) => self.settings.view(cancellable).map(Message::Settings),
         }
     }
 }

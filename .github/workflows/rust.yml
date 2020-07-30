@@ -18,6 +18,6 @@ jobs:
     - name: Clone repo
       uses: actions/checkout@v2
     - name: Install x11
-      run: sudo apt-get install pkg-config xorg libxi-dev libxtst-dev
+      run: sudo apt-get install pkg-config libxi-dev libxtst-dev
     - name: Build
       run: cargo build

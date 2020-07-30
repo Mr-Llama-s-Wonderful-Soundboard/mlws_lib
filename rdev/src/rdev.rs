@@ -191,8 +191,62 @@ pub enum Key {
     Unknown(u32),
 }
 
+impl std::fmt::Display for Key {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Num1 => write!(f, "1"),
+            Self::Num2 => write!(f, "2"),
+            Self::Num3 => write!(f, "3"),
+            Self::Num4 => write!(f, "4"),
+            Self::Num5 => write!(f, "5"),
+            Self::Num6 => write!(f, "6"),
+            Self::Num7 => write!(f, "7"),
+            Self::Num8 => write!(f, "8"),
+            Self::Num9 => write!(f, "9"),
+            Self::Num0 => write!(f, "0"),
+            Self::Minus => write!(f, "-"),
+            Self::Equal => write!(f, "="),
+            Self::KeyQ => write!(f, "Q"),
+            Self::KeyW => write!(f, "W"),
+            Self::KeyE => write!(f, "E"),
+            Self::KeyR => write!(f, "R"),
+            Self::KeyT => write!(f, "T"),
+            Self::KeyY => write!(f, "Y"),
+            Self::KeyU => write!(f, "U"),
+            Self::KeyI => write!(f, "I"),
+            Self::KeyO => write!(f, "O"),
+            Self::KeyP => write!(f, "P"),
+            Self::LeftBracket => write!(f, "["),
+            Self::RightBracket => write!(f, "]"),
+            Self::KeyA => write!(f, "A"),
+            Self::KeyS => write!(f, "S"),
+            Self::KeyD => write!(f, "D"),
+            Self::KeyF => write!(f, "F"),
+            Self::KeyG => write!(f, "G"),
+            Self::KeyH => write!(f, "H"),
+            Self::KeyJ => write!(f, "J"),
+            Self::KeyK => write!(f, "K"),
+            Self::KeyL => write!(f, "L"),
+            Self::SemiColon => write!(f, ";"),
+            Self::Quote => write!(f, "'"),
+            Self::KeyZ => write!(f, "Z"),
+            Self::KeyX => write!(f, "X"),
+            Self::KeyC => write!(f, "C"),
+            Self::KeyV => write!(f, "V"),
+            Self::KeyB => write!(f, "B"),
+            Self::KeyN => write!(f, "N"),
+            Self::KeyM => write!(f, "M"),
+            Self::Comma => write!(f, ","),
+            Self::Dot => write!(f, "."),
+            Self::Slash => write!(f, "/"),
+            Self::Unknown(0) => write!(f, "Unset"),
+            a => write!(f, "{:?}", a),
+        }
+    }
+}
+
 /// Standard mouse buttons
-/// Some mice have more than 3 buttons. These are not defined, and different
+/// Some mice have more than 3 buttons. These are not defined=> write!(f, "a") and different
 /// OSs will give different `Button::Unknown` values.
 #[derive(Debug, Copy, Clone, PartialEq)]
 #[cfg_attr(feature = "serialize", derive(serde::Serialize, serde::Deserialize))]

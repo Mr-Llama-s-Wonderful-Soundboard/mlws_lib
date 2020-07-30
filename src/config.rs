@@ -9,7 +9,7 @@ use std::hash::Hash;
 use std::io::{Cursor, Read, Write};
 use std::path::PathBuf;
 use zip_extract as zip;
-use crossbeam_channel;
+use rdev::Key;
 
 
 use log::info;
@@ -21,7 +21,7 @@ pub struct Config {
     pub loopback_device: Option<String>,
     #[cfg(feature = "autoloop")]
     pub autoloop: bool,
-    pub hotkeys: HashMap<String, (u32, u32)>,
+    pub hotkeys: HashMap<String, Vec<Key>>,
 }
 
 impl Config {
@@ -122,21 +122,6 @@ impl SoundConfig {
 
         info!("Done!");
         Self { sounds }
-    }
-
-    
-
-    pub fn download_and_extract() {
-        let basedirs = BaseDirs::new().expect("Error getting base dirs");
-        let sounds_dir = basedirs.home_dir().join(".mlws");
-        let mut archive = Vec::new();
-        info!("Downloading sounds from {}", SOUNDS_URL);
-        reqwest::blocking::get(SOUNDS_URL)
-            .expect("Error getting sounds files")
-            .read_to_end(&mut archive)
-            .expect("Error reading archive");
-        info!("Extracting sounds");
-        zip::extract(Cursor::new(archive), &sounds_dir, true).expect("Error extracting archive");
     }
 
     pub fn get(&self, name: &String) -> Option<&Sound> {

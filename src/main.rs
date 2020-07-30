@@ -60,7 +60,7 @@ fn main() {
     //config::SoundsConfig::load();
     setup_logger().unwrap();
     info!("loaded logger");
-    let h = hotkey::HotkeyManager::new();
+    //let h = hotkey::HotkeyManager::new();
 
     
     //h.register(vec![Key::KeyA], ||{warn!("HOTKEY A")});
@@ -124,8 +124,9 @@ fn main() {
         state = ui::AppState::Soundboard;
     }
 
-    let mut settings = Settings::with_flags((gui_sender, gui_receiver, state, soundloop, h));
+    let mut settings = Settings::with_flags((gui_sender, gui_receiver, state, soundloop));
     settings.window.decorations = true;
+    settings.window.size = (1440, 768);
     ui::App::run(settings);
     //loop {}
 }
