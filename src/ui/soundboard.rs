@@ -11,13 +11,14 @@ use crate::sound;
 #[derive(Debug, Clone)]
 pub enum SoundboardMessage {
     SettingsPressed,
-	SoundPressed(String),
+    SoundPressed(String),
+    StopAllSounds,
 	ReloadSounds,
 }
 
 pub struct Soundboard {
     settings_button: button::State,
-    update_button: button::State,
+    stop_button: button::State,
     sounds_buttons: Vec<Vec<(String, button::State)>>,
     sounds: config::SoundConfig,
     sound_sender: crossbeam_channel::Sender<sound::Message>,
@@ -33,7 +34,7 @@ impl Soundboard {
             sound_sender,
             sound_reciever,
             settings_button: Default::default(),
-            update_button: Default::default(),
+            stop_button: Default::default(),
             sounds_buttons: Default::default(),
             sounds: Default::default(),
         };
@@ -54,7 +55,13 @@ impl Soundboard {
 			SoundboardMessage::ReloadSounds => {
 				self.load_sounds();
 				(Command::none(), None)
-			}
+            }
+            SoundboardMessage::StopAllSounds => {
+                self.sound_sender
+                    .send(sound::Message::StopAll)
+                    .expect("Error sending stop all sounds");
+					(Command::none(), None)
+            }
         }
     }
 
@@ -88,13 +95,16 @@ impl Soundboard {
         c.push(
                 Button::new(&mut self.settings_button, Text::new("⚙"))
                     .on_press(super::Message::Soundboard(SoundboardMessage::SettingsPressed)),
+            ).push(
+                Button::new(&mut self.stop_button, Text::new("STOP EVERYTHING"))
+                    .on_press(super::Message::Soundboard(SoundboardMessage::StopAllSounds)),
             )
             .into()
     }
 
     fn add_sound(&mut self, i: String) {
         let last = self.sounds_buttons.last_mut().unwrap();
-        if last.len() >= 5 {
+        if last.len() >= 7 {
             self.sounds_buttons.push(vec![(i, Default::default())])
         } else {
             last.push((i, Default::default()))

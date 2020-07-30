@@ -69,9 +69,9 @@ impl Application for App {
             message_receiver: m_receiver,
         };
         r.soundboard.load_sounds();
-        r.hotkeys.register(vec![rdev::Key::KeyA, rdev::Key::Insert], Box::new(move || {
+        r.hotkeys.register(vec![rdev::Key::KeyR], Box::new(move || {
             m_sender.send(
-                soundboard::SoundboardMessage::SoundPressed("My body tells me yes".into()),
+                soundboard::SoundboardMessage::SoundPressed("Our anthem".into()),
             ).expect("Error sending sound request");
         }));
         (r, Command::none())
