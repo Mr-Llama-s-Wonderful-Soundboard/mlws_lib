@@ -207,6 +207,7 @@ impl SoundLoop {
 
     pub fn restart(&mut self) -> Result<(), ()> {
         self.stop();
+        self.load();
         self.run()
     }
 }
