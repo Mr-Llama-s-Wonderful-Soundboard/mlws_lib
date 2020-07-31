@@ -1,6 +1,6 @@
 [package]
 name = "mr_llamas_wonderful_soundboard"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["ThePerkinrex <theperkinrex@gmail.com>"]
 edition = "2018"
 
