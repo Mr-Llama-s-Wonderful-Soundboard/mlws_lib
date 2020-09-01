@@ -16,8 +16,8 @@ xm = ["libxm-soundboard"]
 
 
 [dependencies]
-iced = {version = "0.1.1", features=["image"]}
-iced_native = "0.2.2"
+# iced = {version = "0.1.1", features=["image"]}
+# iced_native = "0.2.2"
 ron = "0.6.0"
 serde = "1.0.114"
 miniaudio = "0.10.0"
