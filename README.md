@@ -3,6 +3,8 @@ Mr Llama's Wonderful Soundboard (MLWS)
 
 A sound board written in Rust
 
+To build the [bindgen requirements](https://rust-lang.github.io/rust-bindgen/requirements.html) are necessary, as miniaudio is configured to always require them
+
 (Sound code taken from https://github.com/gamebooster/soundboard)
 
 ### providing virtual microphone on windows
