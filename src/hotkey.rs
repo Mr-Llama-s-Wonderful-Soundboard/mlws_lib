@@ -2,8 +2,7 @@ use rdev::{listen, Event, Key, EventType};
 use crossbeam_channel::{unbounded, Sender, Receiver};
 use lazy_static::lazy_static;
 
-use std::collections::{HashMap, HashSet};
-use std::hash::Hash;
+use std::collections::{HashMap};
 
 #[allow(unused)]
 use log::{warn, info, error};
@@ -138,7 +137,7 @@ impl HotkeyManager {
 				match m {
 					ThreadMessage::DetectedStopped(v) => {return v;}
 					ThreadMessage::Detected(_) => {} // Discard
-					loopback => {self.manager_sender.send(ManagerMessage::Loopback(loopback)).expect("Error sending loopback")}
+					// loopback => {self.manager_sender.send(ManagerMessage::Loopback(loopback)).expect("Error sending loopback")}
 				}
 			}
 		}
