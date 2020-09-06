@@ -3,6 +3,7 @@ use crossbeam_channel::{unbounded, Sender, Receiver};
 use lazy_static::lazy_static;
 
 use std::collections::{HashMap};
+use std::hash::Hash;
 
 #[allow(unused)]
 use log::{warn, info, error};
@@ -19,13 +20,13 @@ fn send_event(e: Event) {
 	//info!("EVENT SENT");
 }
 /// For sending from the manager to the thread
-pub enum ManagerMessage {
+pub enum ManagerMessage<K> {
 	StartDetect,
 	StopDetect,
 	Stop,
 	Loopback(ThreadMessage),
-	Register(String, Vec<Key>, Box<dyn Fn() + Send>),
-	Unregister(String)
+	Register(K, Vec<Key>, Box<dyn Fn() + Send>),
+	Unregister(K)
 }
 
 /// For sending from the thread to the manager
@@ -34,16 +35,16 @@ pub enum ThreadMessage {
 	DetectedStopped(Vec<Key>),
 }
 
-pub struct HotkeyManager {
+pub struct HotkeyManager<K> {
 	/// For sending from the manager to the thread
-	manager_sender: Sender<ManagerMessage>,
+	manager_sender: Sender<ManagerMessage<K>>,
 
 	/// For sending from the thread to the manager
 	pub manager_receiver: Receiver<ThreadMessage>
 }
 
-impl HotkeyManager {
-	pub fn new(hotkeys: HashMap<String, (Vec<Key>, Box<dyn Fn() + Send>)>) -> Self {
+impl<K: Hash + Eq + Send + 'static> HotkeyManager<K> {
+	pub fn new(hotkeys: HashMap<K, (Vec<Key>, Box<dyn Fn() + Send>)>) -> Self {
 		let (manager_sender, thread_receiver) = unbounded();
 		let (thread_sender, manager_receiver) = unbounded();
 		
@@ -54,7 +55,7 @@ impl HotkeyManager {
 		std::thread::spawn(move ||{
 			info!("Listening for keys (CHANNEL THREAD)");
 			let mut detected: Option<Vec<Key>> = None;
-			let mut hotkeys: HashMap<String, (Vec<Key>, Box<dyn Fn() + Send>)> = hotkeys;
+			let mut hotkeys: HashMap<K, (Vec<Key>, Box<dyn Fn() + Send>)> = hotkeys;
 			let mut pressed_keys: Vec<Key> = Vec::new();
 			loop {
 				//info!("Trying to recv");
@@ -103,13 +104,13 @@ impl HotkeyManager {
 						ManagerMessage::Loopback(m) => {thread_sender.send(m).expect("Error looping back message");}
 						ManagerMessage::Register(name, keys, f) => {
 							hotkeys.insert(name,(keys, f));
-							info!("{:?}", hotkeys.keys());
+							// info!("{:?}", hotkeys.keys());
 						}
 						ManagerMessage::Unregister(keys) => {
-							info!("Unregistering {}", keys);
-							info!("{:?}", hotkeys.keys());
+							// info!("Unregistering {}", keys);
+							// info!("{:?}", hotkeys.keys());
 							hotkeys.remove(&keys);
-							info!("{:?}", hotkeys.keys());
+							// info!("{:?}", hotkeys.keys());
 						}
 
 					};
@@ -147,11 +148,11 @@ impl HotkeyManager {
 		self.manager_sender.send(ManagerMessage::Stop).expect("Error sending stop signal");
 	}
 
-	pub fn register(&self,name: String, keys: Vec<Key>, f: Box<dyn Fn() + Send>) {
+	pub fn register(&self,name: K, keys: Vec<Key>, f: Box<dyn Fn() + Send>) {
 		self.manager_sender.send(ManagerMessage::Register(name, keys, f)).expect("Error sending register request");
 	}
 
-	pub fn unregister(&self,name: String) {
+	pub fn unregister(&self,name: K) {
 		self.manager_sender.send(ManagerMessage::Unregister(name)).expect("Error sending unregister request");
 	}
 }

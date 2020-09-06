@@ -70,7 +70,9 @@ pub fn load_module(module_name: &str, args: &str) -> Result<u32> {
                 ))
             }
         };
-        check_sender.send(r).expect("send channel error");
+        if let Err(e) = check_sender.send(r) {
+            println!("Pulse sender_error: {}",e.to_string());
+        }
     };
     introspector.get_module_info_list(check_module_callback);
     mainloop.unlock();

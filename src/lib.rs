@@ -10,16 +10,18 @@ pub mod sound;
 
 pub mod hotkey;
 pub mod keybind;
+mod downloader;
 
-
+pub type SoundSender = crossbeam_channel::Sender<sound::Message>;
+pub type SoundReceiver = crossbeam_channel::Receiver<sound::Message>;
 
 pub fn setup() -> (crossbeam_channel::Sender<sound::Message>, crossbeam_channel::Receiver<sound::Message>, SoundLoop) {
 	#[allow(unused)]
     let mut conf = config::Config::load();
+    println!("MLWS Config loaded");
 
     #[cfg(feature = "autoloop")]
     if conf.autoloop {
-        info!("Loading modules");
         let _null_sink = match PaModule::load(
             "module-null-sink",
             "sink_name=SoundboardNullSink sink_properties=device.description=SoundboardNullSink",
@@ -60,6 +62,9 @@ pub fn setup() -> (crossbeam_channel::Sender<sound::Message>, crossbeam_channel:
 	(gui_sender, gui_receiver, soundloop)
 }
 
+use std::sync::Arc;
+
+#[derive(Clone)]
 pub struct SoundLoop {
     output_id: Option<String>,
     input_id: Option<String>,
@@ -69,7 +74,7 @@ pub struct SoundLoop {
     sound_receiver: crossbeam_channel::Receiver<sound::Message>,
     sound_sender: crossbeam_channel::Sender<sound::Message>,
 
-    thread_handle: Option<std::thread::JoinHandle<()>>,
+    thread_handle: Option<Arc<std::thread::JoinHandle<()>>>,
 }
 
 impl SoundLoop {
@@ -108,7 +113,7 @@ impl SoundLoop {
             let input_id = self.input_id.clone();
             let output_id = self.output_id.clone();
 
-            self.thread_handle = Some(std::thread::spawn(move || {
+            self.thread_handle = Some(Arc::new(std::thread::spawn(move || {
                 sound::run_sound_loop(
                     sound_receiver,
                     sound_sender,
@@ -117,7 +122,7 @@ impl SoundLoop {
                     output_id,
                     loopback_id,
                 );
-            }));
+            })));
 
             Ok(())
         } else {

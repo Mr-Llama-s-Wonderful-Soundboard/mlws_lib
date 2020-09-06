@@ -5,40 +5,43 @@ use rdev::Key;
 use log::error;
 
 use std::collections::HashMap;
+use std::hash::Hash;
 
 use crate::config::Config;
 
-pub struct KeyBindings<Message: Send, F: Fn(String) -> Message> {
-    keybinds: Vec<(String, Vec<Key>)>,
+pub struct KeyBindings<Message: Send + 'static, F: Fn(K) -> Message, K: Eq + Hash + Clone> {
+    keybinds: Vec<(K, Vec<Key>)>,
     setting_keybind: Option<(usize, Vec<Key>)>,
-    hotkeys: crate::hotkey::HotkeyManager,
-	m_sender: Sender<Message>,
-	on_hotkey: F,
+    hotkeys: crate::hotkey::HotkeyManager<K>,
+    m_sender: Sender<Message>,
+    on_hotkey: F,
 }
 
-impl<Message: Send + 'static, F: Fn(String) -> Message> KeyBindings<Message, F> {
-    fn new(m_sender: Sender<Message>, cfg: Config, on_hotkey: F) -> Self {
+impl<Message, F> KeyBindings<Message, F, (String, String)>
+where
+    Message: Send + 'static,
+    F: Fn((String, String)) -> Message,
+{
+    pub fn new(m_sender: Sender<Message>, cfg: Config, on_hotkey: F) -> Self {
         let mut r = Self {
             keybinds: Vec::new(),
             setting_keybind: None,
             hotkeys: crate::hotkey::HotkeyManager::new(Default::default()),
-			m_sender,
-			on_hotkey
+            m_sender,
+            on_hotkey,
         };
         r.load_config(cfg.hotkeys);
         r
     }
 
-    fn load_config(&mut self, hotkeys: HashMap<String, Vec<Key>>) {
+    pub fn load_config(&mut self, hotkeys: HashMap<(String, String), Vec<Key>>) {
         for (name, keys) in hotkeys {
-            self.keybinds.push(
-                (name, keys)
-            );
+            self.keybinds.push((name, keys));
             self.set(self.keybinds.len() - 1);
         }
     }
 
-    fn save_config(&self) -> HashMap<String, Vec<Key>> {
+    pub fn save_config(&self) -> HashMap<(String, String), Vec<Key>> {
         let mut hm = HashMap::new();
         for (name, keys) in &self.keybinds {
             hm.insert(name.clone(), keys.clone());
@@ -46,7 +49,7 @@ impl<Message: Send + 'static, F: Fn(String) -> Message> KeyBindings<Message, F> 
         hm
     }
 
-    fn tick(&mut self) {
+    pub fn tick(&mut self) {
         if let Some(d) = self.hotkeys.has_detected() {
             match d {
                 crate::hotkey::ThreadMessage::Detected(k) => {
@@ -61,14 +64,13 @@ impl<Message: Send + 'static, F: Fn(String) -> Message> KeyBindings<Message, F> 
         }
     }
 
-    fn finished_detecting(&mut self, id: usize, keys: Vec<Key>) {
-       
+    pub fn finished_detecting(&mut self, id: usize, keys: Vec<Key>) {
         self.keybinds[id].1 = keys;
         self.set(id);
         self.setting_keybind = None;
     }
 
-    fn set(&self, id: usize) {
+    pub fn set(&self, id: usize) {
         let (txt, keys) = self.keybinds[id].clone();
         let sender_clone = self.m_sender.clone();
         let (m_send, m_recv) = crossbeam_channel::bounded(1);
@@ -84,10 +86,9 @@ impl<Message: Send + 'static, F: Fn(String) -> Message> KeyBindings<Message, F> 
         );
     }
 
-    fn unset(&mut self, id: usize) {
+    pub fn unset(&mut self, id: usize) {
         let txt = self.keybinds[id].0.clone();
         // info!("Unregistering {}", txt);
         self.hotkeys.unregister(txt);
-        
     }
 }
