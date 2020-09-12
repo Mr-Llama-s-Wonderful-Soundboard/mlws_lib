@@ -10,7 +10,7 @@ pub mod sound;
 
 pub mod hotkey;
 pub mod keybind;
-mod downloader;
+pub mod downloader;
 
 pub type SoundSender = crossbeam_channel::Sender<sound::Message>;
 pub type SoundReceiver = crossbeam_channel::Receiver<sound::Message>;

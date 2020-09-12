@@ -18,23 +18,23 @@ xm = ["libxm-soundboard"]
 [dependencies]
 # iced = {version = "0.1.1", features=["image"]}
 # iced_native = "0.2.2"
-ron = "0.6.0"
-serde = "1.0.114"
+ron = "0.6.2"
+serde = "1.0.115"
 miniaudio = "0.10.0"
 anyhow = "1.0.32"
 log = "0.4.11"
 fern = "0.6.0"
 recolored = "1.9.3"
-crossbeam-channel = "0.4.3"
+crossbeam-channel = "0.4.4"
 parking_lot = "0.11.0"
-strum = "0.18.0"
-strum_macros = "0.18.0"
+strum = "0.19.2"
+strum_macros = "0.19.2"
 directories = "3.0.1"
 reqwest = { version = "0.10", features = ["blocking"] }
 zip-extract = "0.1.0"
 rdev = {path = "./rdev", features = ["serialize"]}
 lazy_static = "1.4.0"
-smol = {version = "0.3.3", features = ["tokio02"] }
+smol = "1.0.0"
 futures-util = "0.3.5"
 async-std = { version = "1.6.2", features = ["unstable"] }
 
