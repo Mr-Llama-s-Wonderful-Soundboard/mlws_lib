@@ -7,6 +7,7 @@ use pulseauto::Module as PaModule;
 #[cfg(not(feature = "autoloop"))]
 struct PaModule; // So that optionals for dropping work
 pub mod sound;
+pub use rdev;
 
 pub mod hotkey;
 pub mod keybind;

@@ -256,7 +256,7 @@ pub type PlayStatusVecType = Vec<(
     Option<TotalDuration>,
 )>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Message {
     PlaySound(config::Sound, SoundDevices),
     StopSound(config::Sound),

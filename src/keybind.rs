@@ -9,7 +9,7 @@ use std::hash::Hash;
 
 use crate::config::Config;
 
-pub struct KeyBindings<Message: Send + 'static, F: Fn(K) -> Message, K: Eq + Hash + Clone> {
+pub struct KeyBindings<Message: Send + 'static, F: Fn(K) -> Message + Send, K: Eq + Hash + Clone + Send> {
     keybinds: Vec<(K, Vec<Key>)>,
     setting_keybind: Option<(usize, Vec<Key>)>,
     hotkeys: crate::hotkey::HotkeyManager<K>,
@@ -20,9 +20,12 @@ pub struct KeyBindings<Message: Send + 'static, F: Fn(K) -> Message, K: Eq + Has
 impl<Message, F> KeyBindings<Message, F, (String, String)>
 where
     Message: Send + 'static,
-    F: Fn((String, String)) -> Message,
+    F: Fn((String, String)) -> Message + Send,
 {
-    pub fn new(m_sender: Sender<Message>, cfg: Config, on_hotkey: F) -> Self {
+    pub fn new(m_sender: Sender<Message>, cfg: Config, on_hotkey: F) -> Self
+    where
+        Message: Clone,
+    {
         let mut r = Self {
             keybinds: Vec::new(),
             setting_keybind: None,
@@ -34,11 +37,23 @@ where
         r
     }
 
-    pub fn load_config(&mut self, hotkeys: HashMap<(String, String), Vec<Key>>) {
+    pub fn load_config(&mut self, hotkeys: HashMap<(String, String), Vec<Key>>)
+    where
+        Message: Clone,
+    {
+        self.remove_everything();
         for (name, keys) in hotkeys {
             self.keybinds.push((name, keys));
             self.set(self.keybinds.len() - 1);
         }
+    }
+
+    pub fn add(&mut self, sound: (String, String), keys: Vec<Key>)
+    where
+        Message: Clone,
+    {
+        self.keybinds.push((sound, keys));
+        self.set(self.keybinds.len() - 1);
     }
 
     pub fn save_config(&self) -> HashMap<(String, String), Vec<Key>> {
@@ -64,24 +79,53 @@ where
         }
     }
 
-    pub fn finished_detecting(&mut self, id: usize, keys: Vec<Key>) {
+    pub fn start_detecting(&mut self, id: usize) {
+        self.setting_keybind = Some((id, vec![]));
+        self.hotkeys.start_detecting();
+    }
+
+    pub fn stop_detecting(&mut self) where Message: Clone {
+        if let Some((id, _)) = self.setting_keybind {
+            let h = self.hotkeys.stop_detecting();
+            self.finished_detecting(id, h);
+        }
+    }
+
+    pub fn has_detected(&self) -> Option<Vec<Key>> {
+		match self.hotkeys.has_detected() {
+            Some(crate::hotkey::ThreadMessage::Detected(k)) => Some(k),
+            _ => None
+        }
+	}
+
+    pub fn finished_detecting(&mut self, id: usize, keys: Vec<Key>)
+    where
+        Message: Clone,
+    {
         self.keybinds[id].1 = keys;
         self.set(id);
         self.setting_keybind = None;
     }
 
-    pub fn set(&self, id: usize) {
+    pub fn set(&self, id: usize)
+    where
+        Message: Clone,
+    {
         let (txt, keys) = self.keybinds[id].clone();
         let sender_clone = self.m_sender.clone();
         let (m_send, m_recv) = crossbeam_channel::bounded(1);
-        m_send.send((self.on_hotkey)(txt.clone()));
+        m_send.send((self.on_hotkey)(txt.clone())).unwrap();
+        let s = m_send.clone();
+
         self.hotkeys.register(
             txt.clone(),
             keys,
             Box::new(move || {
+                let m = m_recv.recv().unwrap();
                 sender_clone
-                    .send(m_recv.recv().unwrap())
+                    .send(m.clone())
                     .expect("Error sending sound message");
+                s.send(m).unwrap();
             }),
         );
     }
@@ -90,5 +134,16 @@ where
         let txt = self.keybinds[id].0.clone();
         // info!("Unregistering {}", txt);
         self.hotkeys.unregister(txt);
+    }
+
+    pub fn remove_everything(&mut self) {
+        for i in 0..self.keybinds.len() {
+            self.unset(i);
+        }
+        self.keybinds = vec![];
+    }
+
+    pub fn keys(&self) -> Vec<((String, String), Vec<Key>)> {
+        self.keybinds.clone()
     }
 }
