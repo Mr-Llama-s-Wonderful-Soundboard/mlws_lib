@@ -1,7 +1,5 @@
 // Initial version from Rodio and Cpal APACHE LICENSE 2.0
 
-use std::mem;
-
 /// Format that each sample has.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SampleFormat {

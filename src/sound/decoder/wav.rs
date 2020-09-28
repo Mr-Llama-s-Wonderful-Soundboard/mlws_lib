@@ -139,7 +139,7 @@ where
 {
     let stream_pos = data.seek(SeekFrom::Current(0)).unwrap();
 
-    if let Err(e) = WavReader::new(data.by_ref()) {
+    if let Err(_) = WavReader::new(data.by_ref()) {
         data.seek(SeekFrom::Start(stream_pos)).unwrap();
         return false;
     }

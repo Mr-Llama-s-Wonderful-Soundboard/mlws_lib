@@ -6,8 +6,6 @@ use std::fmt;
 use std::io::{Read, Seek};
 use std::time::Duration;
 
-use log::info;
-
 use super::source::Source;
 
 #[cfg(feature = "flac")]

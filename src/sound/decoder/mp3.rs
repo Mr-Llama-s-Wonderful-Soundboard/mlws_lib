@@ -1,6 +1,6 @@
 // Initial version from Rodio APACHE LICENSE 2.0
 use crate::sound::source::Source;
-use log::{error, info, trace, warn};
+use log::{trace};
 use minimp3::{Decoder, Frame};
 use std::io::SeekFrom;
 use std::io::{Read, Seek};

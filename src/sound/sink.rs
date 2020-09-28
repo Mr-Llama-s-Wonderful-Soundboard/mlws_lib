@@ -1,13 +1,9 @@
 // Initial version from Rodio APACHE LICENSE 2.0
 
-use anyhow::{anyhow, Context, Result};
-use log::{error, info, trace, warn};
-use miniaudio::{Device, DeviceConfig, DeviceId, DeviceType, Frames, FramesMut};
-use std::sync::atomic::Ordering;
-use std::sync::atomic::{AtomicBool, AtomicUsize};
-use std::sync::mpsc::Receiver;
+use anyhow::{anyhow, Result};
+use miniaudio::{DeviceType, Frames, FramesMut};
+use std::sync::atomic::{AtomicBool};
 use std::sync::Arc;
-use std::time::Duration;
 
 use super::sample::Sample;
 use super::source::Source;

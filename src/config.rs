@@ -1,15 +1,12 @@
 use directories::{BaseDirs, ProjectDirs};
 use rdev::Key;
-use reqwest;
 use ron;
 use serde::*;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap};
 use std::fs::{create_dir_all, read_to_string, File};
 use std::hash::Hash;
-use std::io::{Cursor, Read, Write};
-use std::iter::FromIterator;
+use std::io::{Read, Write};
 use std::path::PathBuf;
-use zip_extract as zip;
 
 use log::info;
 
@@ -132,9 +129,6 @@ pub struct SoundConfig {
     pub sounds: HashMap<String, HashMap<String, Sound>>,
     sounds_path: PathBuf,
 }
-
-const SOUNDS_URL: &str =
-    "https://github.com/Mr-Llama-s-Wonderful-Soundboard/sounds/archive/master.zip";
 
 impl SoundConfig {
     pub async fn load(config: &mut Config) -> Self {
