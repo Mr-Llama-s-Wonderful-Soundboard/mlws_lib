@@ -12,6 +12,7 @@ pub use rdev;
 pub mod hotkey;
 pub mod keybind;
 pub mod downloader;
+mod utils;
 
 pub type SoundSender = crossbeam_channel::Sender<sound::Message>;
 pub type SoundReceiver = crossbeam_channel::Receiver<sound::Message>;
@@ -37,13 +38,13 @@ pub fn setup() -> (crossbeam_channel::Sender<sound::Message>, crossbeam_channel:
 
         //_maybe_null_sink = Some(null_sink);
 
-        let _loopback = match PaModule::load(
-            "module-loopback",
-            "source=@DEFAULT_SOURCE@ sink=SoundboardNullSink latency_msec=5",
-        ) {
-            Ok(r) => r,
-            Err(e) => panic!("Error: {}", e),
-        };
+        // let _loopback = match PaModule::load(
+        //     "module-loopback",
+        //     "source=@DEFAULT_SOURCE@ sink=SoundboardNullSink latency_msec=5",
+        // ) {
+        //     Ok(r) => r,
+        //     Err(e) => panic!("Error: {}", e),
+        // };
     }
 
     let (sound_sender, gui_receiver): (

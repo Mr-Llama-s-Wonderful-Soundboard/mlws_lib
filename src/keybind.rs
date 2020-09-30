@@ -107,6 +107,10 @@ where
         self.setting_keybind = None;
     }
 
+    pub fn is_detecting(&self) -> bool {
+        self.setting_keybind.is_some()
+    }
+
     pub fn set(&self, id: usize)
     where
         Message: Clone,

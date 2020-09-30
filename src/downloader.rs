@@ -162,74 +162,84 @@ pub fn download_threaded<F: Fn(Progress) + Send + Clone + 'static>(
     on_progress: F,
     s: std::sync::mpsc::Sender<Option<DownloadedSoundRepo>>,
 ) {
-    std::thread::Builder::new().name("Downloader".into()).spawn(move || {
-        smol::block_on(async{
-            let status = smol::block_on(status(&repo, &mut data));
-            match status {
-                Status::Latest(_) => (), // Nothing to do,
-                Status::Updatable(_, latest) => {
-                    let mut response =
-                        reqwest::get(&repo.zip_url).await.expect("Error getting repo zip");
-                    let content_length = response.content_length();
-                    let on_progress_clone = on_progress.clone();
-                    std::thread::spawn(move ||on_progress_clone(Progress::Downloading(0, content_length)));
-                    
-                    let mut content = Vec::new();
-                    let mut download_len = 0;
-                    println!("LENGTH: {:?}", content_length);
-                    while content_length.map(|l| l > download_len).unwrap_or(true) {
-                        println!("TRYING TO DOWNLOAD");
-                        if let Some(c) = response.chunk().await.expect("Error getting chunk")
-                        {
-                            println!("DOWNLADING");
-                            download_len += c.len() as u64;
-                            content.extend(c);
-                            let on_progress_clone = on_progress.clone();
-                            std::thread::spawn(move ||on_progress_clone(Progress::Downloading(download_len, content_length)));
-                        } else if let None = content_length {
-                            println!("BREAKING");
-                            break;
-                        }
-                    }
-                    if let Some(l) = content_length {
-                        assert!(l == download_len);
-                    }
+    std::thread::Builder::new()
+        .name("Downloader".into())
+        .spawn(move || {
+            smol::block_on(async {
+                let status = smol::block_on(status(&repo, &mut data));
+                match status {
+                    Status::Latest(_) => (), // Nothing to do,
+                    Status::Updatable(_, latest) => {
+                        let mut response = reqwest::get(&repo.zip_url)
+                            .await
+                            .expect("Error getting repo zip");
+                        let content_length = response.content_length();
+                        let on_progress_clone = on_progress.clone();
+                        std::thread::spawn(move || {
+                            on_progress_clone(Progress::Downloading(0, content_length))
+                        });
 
-                    let on_progress_clone = on_progress.clone();
-                    std::thread::spawn(move ||on_progress_clone(Progress::Installing()));
-                    let basedirs = BaseDirs::new().expect("Error getting base dirs");
-                    let sounds_dir = basedirs.home_dir().join(".mlws");
-                    if !sounds_dir.join("tmp").exists() {
-                        create_dir_all(sounds_dir.join("tmp")).expect("Error creating tmp folder");
+                        let mut content = Vec::new();
+                        let mut download_len = 0;
+                        println!("LENGTH: {:?}", content_length);
+                        while content_length.map(|l| l > download_len).unwrap_or(true) {
+                            println!("TRYING TO DOWNLOAD");
+                            if let Some(c) = response.chunk().await.expect("Error getting chunk") {
+                                println!("DOWNLADING");
+                                download_len += c.len() as u64;
+                                content.extend(c);
+                                let on_progress_clone = on_progress.clone();
+                                std::thread::spawn(move || {
+                                    on_progress_clone(Progress::Downloading(
+                                        download_len,
+                                        content_length,
+                                    ))
+                                });
+                            } else if let None = content_length {
+                                println!("BREAKING");
+                                break;
+                            }
+                        }
+                        if let Some(l) = content_length {
+                            assert!(l == download_len);
+                        }
+
+                        let on_progress_clone = on_progress.clone();
+                        std::thread::spawn(move || on_progress_clone(Progress::Installing()));
+                        let basedirs = BaseDirs::new().expect("Error getting base dirs");
+                        let sounds_dir = basedirs.home_dir().join(".mlws");
+                        if !sounds_dir.join("tmp").exists() {
+                            create_dir_all(sounds_dir.join("tmp"))
+                                .expect("Error creating tmp folder");
+                        }
+                        zip::extract(Cursor::new(content), &sounds_dir.join("tmp"), true)
+                            .expect("Error extracting archive");
+                        let sounds: SoundsRON = from_str(
+                            &read_to_string(sounds_dir.join("tmp").join("sounds.ron"))
+                                .expect("Error reading file"),
+                        )
+                        .expect("Error parsing sounds");
+                        if !sounds_dir.join("sounds").exists() {
+                            create_dir_all(sounds_dir.join("sounds"))
+                                .expect("Error creating sounds folder");
+                        }
+                        if sounds_dir.join("sounds").join(&sounds.name).exists() {
+                            remove_dir_all(sounds_dir.join("sounds").join(&sounds.name)).unwrap();
+                        }
+                        rename(
+                            sounds_dir.join("tmp"),
+                            sounds_dir.join("sounds").join(&sounds.name),
+                        )
+                        .expect("Error renaming repo");
+                        data = Some(DownloadedSoundRepo {
+                            version: latest,
+                            name: sounds.name,
+                        });
+                        std::thread::spawn(move || on_progress(Progress::Done()));
+                        s.send(data).unwrap();
                     }
-                    zip::extract(Cursor::new(content), &sounds_dir.join("tmp"), true)
-                        .expect("Error extracting archive");
-                    let sounds: SoundsRON = from_str(
-                        &read_to_string(sounds_dir.join("tmp").join("sounds.ron"))
-                            .expect("Error reading file"),
-                    )
-                    .expect("Error parsing sounds");
-                    if !sounds_dir.join("sounds").exists() {
-                        create_dir_all(sounds_dir.join("sounds"))
-                            .expect("Error creating sounds folder");
-                    }
-                    if sounds_dir.join("sounds").join(&sounds.name).exists() {
-                        remove_dir_all(sounds_dir.join("sounds").join(&sounds.name)).unwrap();
-                    }
-                    rename(
-                        sounds_dir.join("tmp"),
-                        sounds_dir.join("sounds").join(&sounds.name),
-                    )
-                    .expect("Error renaming repo");
-                    data = Some(DownloadedSoundRepo {
-                        version: latest,
-                        name: sounds.name,
-                    });
-                    std::thread::spawn(move ||on_progress(Progress::Done()));
-                    s.send(data).unwrap();
                 }
-            }
-        });
-        
-    }).unwrap();
+            });
+        })
+        .unwrap();
 }

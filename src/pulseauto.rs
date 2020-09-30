@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use libpulse_binding as pulse;
-use log::{debug, warn, info, trace};
+use log::{debug, info, trace, warn};
 use pulse::context::State;
 
 type ListResult<T> = pulse::callbacks::ListResult<T>;
@@ -71,7 +71,7 @@ pub fn load_module(module_name: &str, args: &str) -> Result<u32> {
             }
         };
         if let Err(e) = check_sender.send(r) {
-            println!("Pulse sender_error: {}",e.to_string());
+            println!("Pulse sender_error: {}", e.to_string());
         }
     };
     introspector.get_module_info_list(check_module_callback);

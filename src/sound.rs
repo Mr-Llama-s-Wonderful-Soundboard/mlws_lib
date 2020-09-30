@@ -16,6 +16,7 @@ mod decoder;
 mod sample;
 mod sink;
 mod source;
+pub mod filter;
 
 use decoder::Decoder;
 use miniaudio::{Context, DeviceId, DeviceType, ShareMode};
@@ -96,7 +97,7 @@ pub fn run_sound_loop(
     let mut context_config = miniaudio::ContextConfig::default();
     context_config
         .pulse_mut()
-        .set_application_name("soundboard")
+        .set_application_name("mlws_lib")
         .expect("failed to set pulse app name");
     let context = Context::new(&DEFAULT_BACKENDS, Some(&context_config))
         .expect("could not create audio context");
@@ -474,6 +475,7 @@ fn run_sound_message_loop(
                 loopback_device
                     .start()
                     .expect("failed to start loopback device again");
+                
             }
         }
     }

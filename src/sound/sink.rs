@@ -2,7 +2,7 @@
 
 use anyhow::{anyhow, Result};
 use miniaudio::{DeviceType, Frames, FramesMut};
-use std::sync::atomic::{AtomicBool};
+use std::sync::atomic::AtomicBool;
 use std::sync::Arc;
 
 use super::sample::Sample;

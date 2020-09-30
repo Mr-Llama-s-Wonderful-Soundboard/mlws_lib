@@ -37,6 +37,7 @@ lazy_static = "1.4.0"
 smol = "1.0.0"
 futures-util = "0.3.5"
 async-std = { version = "1.6.2", features = ["unstable"] }
+avl = "0.6.1"
 
 # AUTOLOOP
 # ctrlc = {version = "3.1.5", features = ["termination"], optional = true}

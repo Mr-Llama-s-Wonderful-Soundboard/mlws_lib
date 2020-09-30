@@ -2,7 +2,7 @@ use directories::{BaseDirs, ProjectDirs};
 use rdev::Key;
 use ron;
 use serde::*;
-use std::collections::{HashMap};
+use std::collections::HashMap;
 use std::fs::{create_dir_all, read_to_string, File};
 use std::hash::Hash;
 use std::io::{Read, Write};
