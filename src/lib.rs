@@ -12,7 +12,7 @@ pub use rdev;
 pub mod hotkey;
 pub mod keybind;
 pub mod downloader;
-mod utils;
+pub mod utils;
 
 pub type SoundSender = crossbeam_channel::Sender<sound::Message>;
 pub type SoundReceiver = crossbeam_channel::Receiver<sound::Message>;

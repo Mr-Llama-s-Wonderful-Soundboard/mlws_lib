@@ -8,9 +8,10 @@ use std::collections::HashMap;
 use std::hash::Hash;
 
 use crate::config::Config;
+use crate::utils::IdMap;
 
 pub struct KeyBindings<Message: Send + 'static, F: Fn(K) -> Message + Send, K: Eq + Hash + Clone + Send> {
-    keybinds: Vec<(K, Vec<Key>)>,
+    keybinds: IdMap<(K, Vec<Key>)>,
     setting_keybind: Option<(usize, Vec<Key>)>,
     hotkeys: crate::hotkey::HotkeyManager<K>,
     m_sender: Sender<Message>,
@@ -27,7 +28,7 @@ where
         Message: Clone,
     {
         let mut r = Self {
-            keybinds: Vec::new(),
+            keybinds: IdMap::new(),
             setting_keybind: None,
             hotkeys: crate::hotkey::HotkeyManager::new(Default::default()),
             m_sender,
@@ -43,8 +44,8 @@ where
     {
         self.remove_everything();
         for (name, keys) in hotkeys {
-            self.keybinds.push((name, keys));
-            self.set(self.keybinds.len() - 1);
+            let id = self.keybinds.add((name, keys));
+            self.set(id);
         }
     }
 
@@ -52,13 +53,13 @@ where
     where
         Message: Clone,
     {
-        self.keybinds.push((sound, keys));
-        self.set(self.keybinds.len() - 1);
+        let id = self.keybinds.add((sound, keys));
+        self.set(id);
     }
 
     pub fn save_config(&self) -> HashMap<(String, String), Vec<Key>> {
         let mut hm = HashMap::new();
-        for (name, keys) in &self.keybinds {
+        for (name, keys) in self.keybinds.iter() {
             hm.insert(name.clone(), keys.clone());
         }
         hm
@@ -141,13 +142,14 @@ where
     }
 
     pub fn remove_everything(&mut self) {
-        for i in 0..self.keybinds.len() {
+        let ids: Vec<usize> = self.keybinds.ids().copied().collect();
+        for i in ids {
             self.unset(i);
         }
-        self.keybinds = vec![];
+        self.keybinds = IdMap::new();
     }
 
-    pub fn keys(&self) -> Vec<((String, String), Vec<Key>)> {
+    pub fn keys(&self) -> IdMap<((String, String), Vec<Key>)> {
         self.keybinds.clone()
     }
 }
