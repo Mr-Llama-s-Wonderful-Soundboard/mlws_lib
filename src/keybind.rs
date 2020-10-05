@@ -144,9 +144,13 @@ where
     pub fn remove_everything(&mut self) {
         let ids: Vec<usize> = self.keybinds.ids().copied().collect();
         for i in ids {
-            self.unset(i);
+            self.remove(i)
         }
-        self.keybinds = IdMap::new();
+    }
+
+    pub fn remove(&mut self, i: usize) {
+        self.unset(i);
+        self.keybinds.remove(i);
     }
 
     pub fn keys(&self) -> IdMap<((String, String), Vec<Key>)> {

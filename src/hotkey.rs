@@ -64,7 +64,7 @@ impl<K: Hash + Eq + Send + 'static> HotkeyManager<K> {
                         match event.event_type {
                             EventType::KeyPress(k) => {
                                 if let Some(v) = &mut detected {
-                                    //warn!("DETECTED {:?}", k);
+                                    println!("DETECTED {:?}", k);
                                     if !v.contains(&k) {
                                         v.push(k);
                                         thread_sender
