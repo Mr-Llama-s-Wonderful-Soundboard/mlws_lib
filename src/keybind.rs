@@ -10,7 +10,11 @@ use std::hash::Hash;
 use crate::config::Config;
 use crate::utils::IdMap;
 
-pub struct KeyBindings<Message: Send + 'static, F: Fn(K) -> Message + Send, K: Eq + Hash + Clone + Send> {
+pub struct KeyBindings<
+    Message: Send + 'static,
+    F: Fn(K) -> Message + Send,
+    K: Eq + Hash + Clone + Send,
+> {
     keybinds: IdMap<(K, Vec<Key>)>,
     setting_keybind: Option<(usize, Vec<Key>)>,
     hotkeys: crate::hotkey::HotkeyManager<K>,
@@ -57,6 +61,16 @@ where
         self.set(id);
     }
 
+    pub fn set_keybind(&mut self, id: usize, sound: (String, String))
+    where
+        Message: Clone,
+    {
+        self.unset(id);
+        let (s, _) = &mut self.keybinds[id];
+        *s = sound;
+        self.set(id);
+    }
+
     pub fn save_config(&self) -> HashMap<(String, String), Vec<Key>> {
         let mut hm = HashMap::new();
         for (name, keys) in self.keybinds.iter() {
@@ -85,7 +99,10 @@ where
         self.hotkeys.start_detecting();
     }
 
-    pub fn stop_detecting(&mut self) where Message: Clone {
+    pub fn stop_detecting(&mut self)
+    where
+        Message: Clone,
+    {
         if let Some((id, _)) = self.setting_keybind {
             let h = self.hotkeys.stop_detecting();
             self.finished_detecting(id, h);
@@ -93,11 +110,11 @@ where
     }
 
     pub fn has_detected(&self) -> Option<Vec<Key>> {
-		match self.hotkeys.has_detected() {
+        match self.hotkeys.has_detected() {
             Some(crate::hotkey::ThreadMessage::Detected(k)) => Some(k),
-            _ => None
+            _ => None,
         }
-	}
+    }
 
     pub fn finished_detecting(&mut self, id: usize, keys: Vec<Key>)
     where
