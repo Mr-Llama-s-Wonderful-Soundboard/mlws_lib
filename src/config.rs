@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use log::info;
 
 use crate::downloader;
+use crate::utils::IdMap;
 
 #[derive(Debug, Deserialize, Serialize, Clone, PartialEq, Ord, PartialOrd, Eq, Hash)]
 pub struct SoundRepo {
@@ -41,14 +42,14 @@ pub struct Config {
     #[cfg(feature = "autoloop")]
     pub autoloop: bool,
     pub hotkeys: HashMap<(String, String), Vec<Key>>,
-    pub repos: Vec<(SoundRepo, Option<DownloadedSoundRepo>)>,
+    pub repos: IdMap<(SoundRepo, Option<DownloadedSoundRepo>)>,
 }
 
 impl Default for Config {
     fn default() -> Self {
         println!("Defaulting config");
         Self {
-            repos: vec![(SoundRepo::new("https://github.com/Mr-Llama-s-Wonderful-Soundboard/sounds/releases/download/latest/sounds.zip", "https://github.com/Mr-Llama-s-Wonderful-Soundboard/sounds/releases/download/latest/version.txt"), None)],
+            repos: IdMap::new(),
             input_device: None,
             output_device: None,
             loopback_device: None,
@@ -138,7 +139,7 @@ impl SoundConfig {
         // let mut repos = HashMap::new();
         // let mut named_repos = HashMap::new();
         let mut sounds_hm = HashMap::new();
-        for (repo, data) in &mut config.repos {
+        for (repo, data) in &mut config.repos.iter_mut() {
             let mut hm = HashMap::new();
             if !matches!(data, Some(x) if sounds_dir.join(&x.name).exists()) {
                 downloader::download(repo, data, |p| {
@@ -155,7 +156,7 @@ impl SoundConfig {
                         downloader::Progress::Installing() => println!("Installing"),
                         downloader::Progress::Done() => println!("Done"),
                     };
-                })
+                }, false)
                 .await
             }
             let soundrepo_data = data.clone().unwrap();
