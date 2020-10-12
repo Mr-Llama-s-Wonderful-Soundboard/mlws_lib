@@ -528,7 +528,7 @@ fn create_duplex_device(
         .playback_mut()
         .set_device_id(Some(loop_device.id().clone()));
 
-    let filter: filter::Filter<i16> = filter::Filter::new();
+    let filter: filter::Filter = filter::Filter::new();
     // let bass_id = filter.add_sample_filter(|s|{println!("{}", s); i16::sine});
 
     device_config.set_data_callback(move |_device, output, input| {
