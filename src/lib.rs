@@ -24,6 +24,7 @@ pub fn setup() -> (crossbeam_channel::Sender<sound::Message>, crossbeam_channel:
 
     #[cfg(feature = "autoloop")]
     if conf.autoloop {
+        println!("Loading PA modules");
         let _null_sink = match PaModule::load(
             "module-null-sink",
             "sink_name=SoundboardNullSink sink_properties=device.description=SoundboardNullSink",
@@ -35,6 +36,7 @@ pub fn setup() -> (crossbeam_channel::Sender<sound::Message>, crossbeam_channel:
             }
             Err(e) => panic!("Error: {}", e),
         };
+        println!("Loaded PA modules");
 
         //_maybe_null_sink = Some(null_sink);
 
@@ -116,6 +118,7 @@ impl SoundLoop {
             let output_id = self.output_id.clone();
 
             self.thread_handle = Some(Arc::new(std::thread::spawn(move || {
+                println!("Running sound loop");
                 sound::run_sound_loop(
                     sound_receiver,
                     sound_sender,

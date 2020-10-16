@@ -78,7 +78,7 @@ pub fn load_module(module_name: &str, args: &str) -> Result<u32> {
     mainloop.unlock();
     let mut present = None;
     loop {
-        debug!("Recieving data");
+        // println!("Recieving data");
         match check_receiver.recv() {
             Err(e) => {
                 return Err(anyhow!(

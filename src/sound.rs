@@ -17,6 +17,7 @@ mod sample;
 mod sink;
 mod source;
 pub mod filter;
+// pub mod freq;
 
 use decoder::Decoder;
 use miniaudio::{Context, DeviceId, DeviceType, ShareMode};
@@ -527,12 +528,17 @@ fn create_duplex_device(
     device_config
         .playback_mut()
         .set_device_id(Some(loop_device.id().clone()));
-
-    let filter: filter::Filter = filter::Filter::new();
+    println!("Setting filter up");
+    // let mut filter: filter::Filter = filter::Filter::new();
     // let bass_id = filter.add_sample_filter(|s|{println!("{}", s); i16::sine});
 
+
+    // filter.add_freq_filter(freq::ApplyKind::Less,4000., |f, s| {s*0.});
+
+    println!("Setting data callback up");
     device_config.set_data_callback(move |_device, output, input| {
-        filter.apply(input, output)
+        output.as_bytes_mut().copy_from_slice(input.as_bytes())
+        // filter.apply(device.sample_rate() as usize, input, output)
     });
 
     device_config.set_stop_callback(|_device| {
